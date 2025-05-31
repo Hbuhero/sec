@@ -1,0 +1,155 @@
+{
+    "abi": [
+        {
+            "type": "constructor",
+            "inputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "function",
+            "name": "getAdmin",
+            "inputs": [
+                {
+                    "name": "adminAddress",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "string",
+                    "internalType": "string"
+                },
+                {
+                    "name": "",
+                    "type": "string",
+                    "internalType": "string"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "getCertificate",
+            "inputs": [
+                {
+                    "name": "certHash",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "tuple",
+                    "internalType": "struct Core.Certificate",
+                    "components": [
+                        {
+                            "name": "certHash",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                        },
+                        {
+                            "name": "ipfsCID",
+                            "type": "string",
+                            "internalType": "string"
+                        },
+                        {
+                            "name": "certType",
+                            "type": "uint8",
+                            "internalType": "enum Core.CertificateType"
+                        },
+                        {
+                            "name": "issuedBy",
+                            "type": "address",
+                            "internalType": "address"
+                        },
+                        {
+                            "name": "issuedAt",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                        },
+                        {
+                            "name": "revoked",
+                            "type": "bool",
+                            "internalType": "bool"
+                        }
+                    ]
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "isAdmin",
+            "inputs": [
+                {
+                    "name": "admin",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bool",
+                    "internalType": "bool"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "issueCertificate",
+            "inputs": [
+                {
+                    "name": "certHash",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "ipfsCID",
+                    "type": "string",
+                    "internalType": "string"
+                },
+                {
+                    "name": "certType",
+                    "type": "uint8",
+                    "internalType": "enum Core.CertificateType"
+                }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "function",
+            "name": "verifyCertificate",
+            "inputs": [
+                {
+                    "name": "certHash",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bool",
+                    "internalType": "bool"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "error",
+            "name": "InvalidCertificate",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "RevokedCertificate",
+            "inputs": []
+        }
+    ]
+}
