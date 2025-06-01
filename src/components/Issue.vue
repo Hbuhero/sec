@@ -1,149 +1,155 @@
 <template>
-    <div>
-        <main class="!p-6 max-w-7xl mx-auto !py-6 sm:!px-6 lg:!px-8">
-            <header>
-                <h1>Certifcate Verification</h1>
-                <p>Upload a certificate to verify its authenticity on the blockchain.</p>
+    <div class="bg-gray-50 min-h-screen py-12">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <header class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">Issue Certificate</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Issue new certificates securely on the blockchain with instant verification capabilities.</p>
             </header>
 
-            <div class="flex gap-12">
-                <v-card  width="400">
-                    <v-card-title>
-                        <v-icon size="small">mdi-magnify</v-icon>
-                        Issue Certifcate
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+                <v-card class="mx-auto w-full max-w-md" elevation="1">
+                    <v-card-title class="pb-6 flex items-center gap-2">
+                        <v-icon size="24" color="blue-600">mdi-certificate</v-icon>
+                        <span class="text-xl font-semibold text-gray-900">Issue Certificate</span>
                     </v-card-title>
 
-                    <div>
-                        <p>Student Name</p>
-                        <v-text-field
-                            name="name"
-                            label="Name"
-                            v-model="name"
-                            variant="outlined"
-                            density="compact"
-                        ></v-text-field>
+                    <div class="px-6 pb-6 space-y-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-700">Student Name</label>
+                            <v-text-field
+                                name="name"
+                                placeholder="Enter student's full name"
+                                v-model="name"
+                                variant="outlined"
+                                density="compact"
+                                color="blue"
+                                class="bg-white"
+                            ></v-text-field>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-700">Certificate Type</label>
+                            <v-select 
+                                :items="items" 
+                                v-model="type" 
+                                variant="outlined" 
+                                density="compact"
+                                color="blue"
+                                class="bg-white"
+                                placeholder="Select certificate type"
+                            ></v-select>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-700">Upload Certificate (PDF)</label>
+                            <v-file-input 
+                                accept=".pdf" 
+                                variant="outlined" 
+                                density="compact"
+                                color="blue"
+                                class="bg-white"
+                                placeholder="Choose a PDF file"
+                                v-model="file"
+                                :rules="[v => !v || v.size < 5000000 || 'File size should be less than 5MB']"
+                            ></v-file-input>
+                        </div>
+
+                        <v-btn 
+                            block
+                            color="blue"
+                            :loading="loading"
+                            :disabled="!file || !type || !name"
+                            @click="issueCertificate"
+                        >
+                            Issue Certificate
+                        </v-btn>
                     </div>
-
-                    <div>
-                        <p>
-                            Certificate Type
-                        </p>
-                        <v-select :items="items" v-model="type" variant="outlined" density="compact" label="Select certificate type"></v-select>
-                    </div>
-
-                    <div>
-                        <p>Upload Certificate (PDF)</p>
-                        <v-file-input accept="pdf" variant="outlined" density="compact" width="200" label="Choose file"
-                            v-model="file">
-                        </v-file-input>
-
-                    </div>
-
-                    <v-btn class="text-none" @click="issueCertificate">Issue Certificate</v-btn>
                 </v-card>
 
-               
-
-                
-                    <v-card  width="400">
-                    <v-card-title primary->
-                        Issuance Results
+                <v-card class="mx-auto w-full max-w-md" elevation="1">
+                    <v-card-title class="pb-6">
+                        <span class="text-xl font-semibold text-gray-900">Issuance Status</span>
                     </v-card-title>
+
                     <v-skeleton-loader type="card" :loading="loading">
+                        <div v-if="issueStatus === 'idle'" class="px-6 pb-6">
+                            <div class="text-center">
+                                <div v-if="!file" class="py-12">
+                                    <div class="rounded-full bg-gray-100 p-4 w-16 h-16 mx-auto mb-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="w-full h-full text-gray-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                                        </svg>
+                                    </div>
+                                    <p class="text-gray-500">Upload a certificate to begin the issuance process</p>
+                                </div>
 
-                    <div v-if="issueStatus === 'idle'" class="overflow-hidden p-6">
-                        <div class="text-center">
-                            
-                            <div v-if="!file" class="flex flex-col items-center py-8">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor" class="size-16 text-gray-400 mb-3">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                                </svg>
-
-                                <p class="text-gray-500">Upload a certificate to issue its authenticity</p>
+                                <div v-else class="py-8">
+                                    <div class="mb-4 p-3 bg-blue-50 rounded-full w-16 h-16 mx-auto">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-blue-600" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mb-2">File Ready</p>
+                                    <p class="font-medium text-gray-800 mb-4 break-all px-4">{{ file.name }}</p>
+                                    <p class="text-sm text-gray-500">Fill in all details and click issue</p>
+                                </div>
                             </div>
+                        </div>
 
-                            
-                            <div v-else class="flex flex-col items-center">
-                                <div class="mb-4 p-3 bg-green-100 rounded-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none"
+                        <div v-if="issueStatus === 'success'" class="px-6 pb-6">
+                            <div class="text-center mb-8">
+                                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-50 p-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-green-600" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <p class="text-sm text-gray-500 mb-1">File Ready</p>
-                                <p class="font-medium text-gray-800 mb-4">{{ file.name }}</p>
-                                <p class="text-sm text-gray-500">Click issue to process issuance</p>
+                                <h3 class="text-xl font-semibold text-green-600">Certificate Issued Successfully</h3>
+                            </div>
+
+                            <div class="space-y-4 mb-6 bg-gray-50 rounded-lg p-4">
+                                <div class="flex">
+                                    <span class="w-1/3 text-sm text-gray-500">Issuer:</span>
+                                    <span class="w-2/3 text-sm font-medium text-gray-900">University of Dar es Salaam</span>
+                                </div>
+                                <div class="flex">
+                                    <span class="w-1/3 text-sm text-gray-500">Issuer Address:</span>
+                                    <span class="w-2/3 font-mono text-xs text-gray-900 break-all">{{ data[3] }}</span>
+                                </div>
+                                <div class="flex">
+                                    <span class="w-1/3 text-sm text-gray-500">Issued Date:</span>
+                                    <span class="w-2/3 text-sm font-medium text-gray-900">{{ convertTimestamp(data[4]) }}</span>
+                                </div>
+                                <div class="flex">
+                                    <span class="w-1/3 text-sm text-gray-500">Status:</span>
+                                    <span class="w-2/3 text-sm font-medium text-green-600">Issued</span>
+                                </div>
+                                <div class="flex">
+                                    <span class="w-1/3 text-sm text-gray-500">Hash:</span>
+                                    <span class="w-2/3 font-mono text-xs text-gray-900 break-all">{{ data[0] }}</span>
+                                </div>
                             </div>
                         </div>
-                    </div> 
-                     <div v-if="issueStatus === 'success'" class=" overflow-hidden">
-                        <div class="p-6">
-                            <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">Verification Result</h2>
 
-                            
-                            <div class="flex flex-col items-center mb-6">
-                                <div class="p-3 bg-green-100 rounded-full mb-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <h3 class="text-lg font-medium text-green-600">Certificate Valid</h3>
-                            </div>
-
-                            
-                            <div class="space-y-4 mb-6">
-                                <div class="flex">
-                                    <span class="w-1/3 text-gray-500">Issuer:</span>
-                                    <span class="w-2/3 font-medium">University of Dar es Salaam</span>
-                                </div>
-                                <div class="flex">
-                                    <span class="w-1/3 text-gray-500">Issuer Address:</span>
-                                    <span
-                                        class="w-2/3 font-mono text-sm break-all">{{ data[3] }}</span>
-                                </div>
-                                <div class="flex">
-                                    <span class="w-1/3 text-gray-500">Issued Date:</span>
-                                    <span class="w-2/3 font-medium">{{ convertTimestamp(data[4]) }}</span>
-                                </div>
-                                <div class="flex">
-                                    <span class="w-1/3 text-gray-500">Status:</span>
-                                    <span class="w-2/3 font-medium text-green-600">Valid</span>
-                                </div>
-                                <div class="flex">
-                                    <span class="w-1/3 text-gray-500">Hash:</span>
-                                    <span class="w-2/3 font-mono text-sm break-all">{{ data[0] }}</span>
-                                </div>
-                            </div>
-
-                            
-                            <button
-                                class="w-full py-2 px-4 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors">
-                                View Original Certificate
-                            </button>
-                        </div>
-                    </div>
-
-                    <div v-if="issueStatus === 'error'" class="overflow-hidden">
-                        <div class="p-6">
-                            <div class="flex flex-col items-center mb-6">
-                                <div class="p-3 bg-red-100 rounded-full mb-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none"
+                        <div v-if="issueStatus === 'error'" class="px-6 pb-6">
+                            <div class="text-center mb-8">
+                                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 p-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-red-600" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </div>
-                                <h3 class="text-lg font-medium text-red-600">Certificate Invalid</h3>
+                                <h3 class="text-xl font-semibold text-red-600">Issuance Failed</h3>
                             </div>
 
-                            
-                            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-                                <div class="flex">
+                            <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+                                <div class="flex items-start">
                                     <div class="flex-shrink-0">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400"
                                             viewBox="0 0 20 20" fill="currentColor">
@@ -152,34 +158,18 @@
                                                 clip-rule="evenodd" />
                                         </svg>
                                     </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-red-700">
-                                            This certificate was not found in our blockchain records. It may be invalid,
-                                            tampered with, or not issued through our system.
-                                        </p>
-                                    </div>
+                                    <p class="ml-3 text-sm text-red-700">
+                                        Failed to issue the certificate. Please check your connection and try again. If the problem persists, contact support.
+                                    </p>
                                 </div>
                             </div>
-
-                           
                         </div>
-                    </div>
-                </v-skeleton-loader>
+                    </v-skeleton-loader>
                 </v-card>
-                
-
-                
-                    
-        
-
             </div>
-
-            
         </main>
     </div>
 </template>
-
-
 
 <script setup>
 import { ethers } from 'ethers';
@@ -190,7 +180,6 @@ import { contractAddress, contractAbi, CertType } from '../contract/constants';
 import Loader from './Loader.vue';
 import {useAuthStore} from '../contract/store'
 import { useRouter } from 'vue-router';
-
 
 const store = useAuthStore()
 const router = useRouter()
@@ -205,11 +194,6 @@ const issueStatus = ref('idle')
 const jwt = import.meta.env.VITE_PINATA_JWT
 const data = ref({})
 const loading = ref(false)
-
-// const pinata = new PinataSDK({
-//   pinataJwt: jwt,
-//   pinataGateway: gateway,
-// });
 
 const issueCertificate = async () => {
     try {
