@@ -21,19 +21,20 @@
 
                         <div class="space-y-2">
                             <label class="text-sm font-medium text-gray-700">Upload Certificate (PDF)</label>
-                            <v-file-input variant="outlined" density="compact" label="Choose file" v-model="file" accept=".pdf" color="blue" class="bg-white"></v-file-input>
+                            <v-file-input accept=".pdf" variant="outlined" density="compact" label="Choose file" v-model="file" color="blue" class="bg-white"></v-file-input>
                         </div>
 
                         <v-btn class="w-full" color="blue" @click="verify" :loading="loading" :disabled="!file || !type">Verify Certificate</v-btn>
                     </div>
                 </v-card>
 
+                <v-skeleton-loader  :loading="loading">
                 <v-card class="mx-auto w-full max-w-md" elevation="1">
                     <v-card-title class="pb-6">
                         <span class="text-xl font-semibold text-gray-900">Verification Results</span>
                     </v-card-title>
 
-                    <v-skeleton-loader type="card" :loading="loading">
+                    
                         <div v-if="verificationStatus === 'idle'" class="px-6 pb-6">
                             <div class="text-center">
                                 <div v-if="!file" class="py-12">
@@ -133,15 +134,15 @@
                                 </div>
                             </div>
                         </div>
-                    </v-skeleton-loader>
                 </v-card>
+            </v-skeleton-loader>
             </div>
 
-            <section class="bg-white rounded-2xl shadow-sm p-8 mb-12">
+            <section class="bg-white rounded-2xl shadow-sm !p-8 mb-12">
                 <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">How Certificate Verification Works</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-shadow">
+                    <div class="bg-gray-50 !p-6 rounded-xl hover:shadow-md transition-shadow">
                         <div class="flex items-center mb-4">
                             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-xl">
                                 1
@@ -153,7 +154,7 @@
                         </p>
                     </div>
 
-                    <div class="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-shadow">
+                    <div class="bg-gray-50 !p-6 rounded-xl hover:shadow-md transition-shadow">
                         <div class="flex items-center mb-4">
                             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-xl">
                                 2
@@ -165,7 +166,7 @@
                         </p>
                     </div>
 
-                    <div class="bg-gray-50 p-6 rounded-xl hover:shadow-md transition-shadow">
+                    <div class="bg-gray-50 !p-6 rounded-xl hover:shadow-md transition-shadow">
                         <div class="flex items-center mb-4">
                             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-xl">
                                 3
@@ -187,6 +188,10 @@ import { ref } from 'vue';
 import { ethers } from 'ethers';
 import  {contractService}  from '../contract/service';
 
+const items = [
+    'Degree', 'Diploma', 'Master', 'Others'
+]
+const type = ref(null)
 const file = ref(null)
 const verificationStatus = ref('idle')  
 const loading = ref(false)
@@ -218,8 +223,10 @@ const verify = async () => {
         
     
     
-    } catch (err) {
-
+    } catch (error) {
+        console.log(error);
+        loading.value = false
+        verificationStatus.value = 'error'
     }
 }
 
@@ -244,13 +251,13 @@ const openFile = () => {
   window.open(url, '_blank')
 }
 
-function convertBytesToString(byte) {
-  try {
-    stringOutput.value = ethers.toUtf8String(byte);
-  } catch (error) {
-    stringOutput.value = `Error: ${error.message}`;
-  }
-}
+// function convertBytesToString(byte) {
+//   try {
+//     stringOutput.value = ethers.toUtf8String(byte);
+//   } catch (error) {
+//     stringOutput.value = `Error: ${error.message}`;
+//   }
+// }
 
 async function hashFile(file) {
     // 1. Read file as ArrayBuffer
@@ -267,10 +274,7 @@ async function hashFile(file) {
   
   }
 
-const items = [
-    'Degree', 'Diploma', 'Master', 'Others'
-]
-const type = ref(null)
+
 </script >
 
 <style lang="scss" scoped></style>

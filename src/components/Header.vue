@@ -52,6 +52,7 @@ const connect = async () => {
   
 
 store.isAdmin = await contractService.isAdmin()
+console.log(store.isAdmin);
 
 }
 

@@ -43,14 +43,13 @@
                         <div class="space-y-2">
                             <label class="text-sm font-medium text-gray-700">Upload Certificate (PDF)</label>
                             <v-file-input 
-                                accept=".pdf" 
                                 variant="outlined" 
                                 density="compact"
                                 color="blue"
                                 class="bg-white"
                                 placeholder="Choose a PDF file"
+                                accept=".pdf"
                                 v-model="file"
-                                :rules="[v => !v || v.size < 5000000 || 'File size should be less than 5MB']"
                             ></v-file-input>
                         </div>
 
@@ -66,12 +65,13 @@
                     </div>
                 </v-card>
 
+                <v-skeleton-loader type="card" :loading="loading">
                 <v-card class="mx-auto w-full max-w-md" elevation="1">
                     <v-card-title class="pb-6">
                         <span class="text-xl font-semibold text-gray-900">Issuance Status</span>
                     </v-card-title>
 
-                    <v-skeleton-loader type="card" :loading="loading">
+                    
                         <div v-if="issueStatus === 'idle'" class="px-6 pb-6">
                             <div class="text-center">
                                 <div v-if="!file" class="py-12">
@@ -134,6 +134,8 @@
                                     <span class="w-2/3 font-mono text-xs text-gray-900 break-all">{{ data[0] }}</span>
                                 </div>
                             </div>
+                            <v-btn block color="blue" @click="openFile" prepend-icon="mdi-file-document-outline">View Original Certificate</v-btn>
+
                         </div>
 
                         <div v-if="issueStatus === 'error'" class="px-6 pb-6">
@@ -164,14 +166,15 @@
                                 </div>
                             </div>
                         </div>
-                    </v-skeleton-loader>
+                    
                 </v-card>
+            </v-skeleton-loader>
             </div>
         </main>
     </div>
 </template>
 
-<script setup>
+<script setup >
 import { ethers } from 'ethers';
 import  {contractService}  from '../contract/service';
 import axios from 'axios';
@@ -180,6 +183,7 @@ import { contractAddress, contractAbi, CertType } from '../contract/constants';
 import Loader from './Loader.vue';
 import {useAuthStore} from '../contract/store'
 import { useRouter } from 'vue-router';
+
 
 const store = useAuthStore()
 const router = useRouter()
@@ -193,40 +197,69 @@ const file = ref(null)
 const issueStatus = ref('idle')
 const jwt = import.meta.env.VITE_PINATA_JWT
 const data = ref({})
+const cid = ref(null)
 const loading = ref(false)
+
+const openFile = () => {
+    
+    if (!cid.value) return
+    console.log('in ');
+    
+    const url = `https://gateway.pinata.cloud/ipfs/${cid.value}`
+    window.open(url, '_blank')
+  }
 
 const issueCertificate = async () => {
     try {
         if (!file.value) return
-        console.log(file.value.name);
+        console.log(file.value);
 
         loading.value = true
         
-    const ipfsFormData = new FormData()
-    ipfsFormData.append("file", file.value);
-    ipfsFormData.append('name', file.value.name)
-    ipfsFormData.append("network", "public");
+    // const ipfsFormData = new FormData()
+    // ipfsFormData.append("file", file.value);
+    // ipfsFormData.append('name', file.value.name)
+    // ipfsFormData.append("network", "public");
     
-    const request = await fetch("https://uploads.pinata.cloud/v3/files", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-      body: ipfsFormData,
-    });
-    const ipfsresponse = await request.json();
+    // const request = await fetch("https://uploads.pinata.cloud/v3/files", {
+    //   method: "POST",
+    //   headers: {
+    //     Authorization: `Bearer ${jwt}`,
+    //   },
+    //   body: ipfsFormData,
+    // });
+    // const ipfsresponse = await request.json();
+
+    const formData = new FormData();
+
+    formData.append('file', file.value);
+    formData.append("pinataMetadata", `{\n  \"name\": \"${file.value.name}\"\n}`);
+    const pinataOptions = JSON.stringify({
+      cidVersion: 0,
+    })
+    formData.append('pinataOptions', pinataOptions);
+
+    
+        const pinataUrl = import.meta.env.VITE_APP_PINATA_URL
+        const privateKey = import.meta.env.VITE_APP_PINATA_KEY
+      const resp = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS/", formData, {
+        maxBodyLength: "Infinity",
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${formData._boundary}`,
+          'Authorization': `Bearer ${jwt}`
+        }
+      });
+      cid.value = resp.data.IpfsHash;
     
 
    const certHash = await hashFile(file.value)
    const certType = CertType[(type.value).toUpperCase()]
-   console.log(ipfsresponse.data.cid);
-   
-   const ipfsCID = ipfsresponse.data.cid
+   console.log(resp.data.IpfsHash);
 
    const contract = await contractService.getContract();
-      const res = await contract.issueCertificate(certHash, ipfsCID, certType)
+      const res = await contract.issueCertificate(certHash, cid.value, certType)
       store.isOngoingTransaction = true
-      res.wait()
+      await res.wait()
       store.isOngoingTransaction = false
 
     const response = await contractService.getCertificate(certHash)
@@ -234,7 +267,7 @@ const issueCertificate = async () => {
     data.value = response
     loading.value = false
     issueStatus.value = 'success'
-
+      
     
 	} catch (error) {
 		console.log(error);
@@ -270,8 +303,10 @@ async function hashFile(file) {
 
 }
 
+
+
 onMounted(() => {
-    console.log(loading.value);
+    console.log(store.isAdmin);
     
 })
 </script>
