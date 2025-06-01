@@ -42,16 +42,16 @@ Tanzania CertChain is a blockchain-based academic credential verification system
 ### Smart Contract Deployment
 The Smart contract is deployed in Ethereum Sepolia with address 0xcc6f893a1d6e780cf19ddb13b4e9b1916c6c2221. You can view your transactions in Sepolia Etherscan.
 
-To deploy your own contract [this repo](). Once deployed replace the contract address in constant.js in the codebase with your own.
+To deploy your own contract check [this repo](https://github.com/Hbuhero/sec-contract). Once deployed replace the contract address in constant.js in the codebase with your own.
 
 ## System Architecture
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│                 │    │                 │    │                 │
-│   Frontend      │───▶│   Backend       │───▶│   Blockchain    │
-│   (Vue.js)      │◀───│   (Node.js)     │◀───│   (Ethereum)    │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌─────────────────┐    
+│                 │    │                 │    
+│   Frontend      │───▶│   Smart         │
+│   (Vue.js)      │◀───│   Contract      │
+│                 │    │                 │   
+└─────────────────┘    └─────────────────┘
 ```
 
 ## Usage Guide
