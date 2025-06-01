@@ -63,6 +63,11 @@ export const contractService = {
     async verifyCertificate(certHash) {
       const contract = await this.getContract();
       return await contract.verifyCertificate(certHash)
+    },
+    
+    async getAdmin() {
+      const contract = await this.getContract();
+      return await contract.getAdmin(localStorage.getItem('address'))
     }
 }
 

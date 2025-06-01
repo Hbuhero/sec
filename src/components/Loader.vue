@@ -1,52 +1,29 @@
-<script setup>
-
-const props = defineProps(['color','width'])
-
-</script>
-
 <template>
-    <div>
-        <svg :class="props.color" :width="props.width || '50px'" viewBox="25 25 50 50">
-            <circle r="20" cy="50" cx="50"></circle>
-        </svg>
+    <div v-if="loading" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="relative">
+        <!-- Outer circle -->
+        <div class="w-16 h-16 border-4 border-blue-500 border-opacity-30 rounded-full"></div>
+        
+        <!-- Inner circle (spinning part) -->
+        <div class="absolute top-0 left-0 w-16 h-16 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+        
+        <!-- Optional text -->
+        <p v-if="text" class="mt-4 text-center text-white font-medium">{{ text }}</p>
+      </div>
     </div>
-    
-</template>
-
-<style scoped>
-svg {
- transform-origin: center;
- animation: rotate4 2s linear infinite;
-}
-
-circle {
- fill: none;
- stroke-width: 2;
- stroke-dasharray: 1, 200;
- stroke-dashoffset: 0;
- stroke-linecap: round;
- animation: dash4 1.5s ease-in-out infinite;
-}
-
-@keyframes rotate4 {
- 100% {
-  transform: rotate(360deg);
- }
-}
-
-@keyframes dash4 {
- 0% {
-  stroke-dasharray: 1, 200;
-  stroke-dashoffset: 0;
- }
-
- 50% {
-  stroke-dasharray: 90, 200;
-  stroke-dashoffset: -35px;
- }
-
- 100% {
-  stroke-dashoffset: -125px;
- }
-}
-</style>
+  </template>
+  
+  <script>
+  export default {
+    props: {
+      loading: {
+        type: Boolean,
+        required: true
+      },
+      text: {
+        type: String,
+        default: ''
+      }
+    }
+  }
+  </script>

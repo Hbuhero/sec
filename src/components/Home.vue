@@ -8,8 +8,8 @@
                 </div>
                 <p class="text-center">Leveraging blockchain technology to ensure the authenticity and integrity of academic certificates. Trusted, transparent, and tamper-proof.</p>
                 <div class="flex gap-4 justify-center">
-                    <v-btn prepend-icon="mdi-magnify" variant="outlined">Verify Certificate</v-btn>
-                    <v-btn prepend-icon="mdi-tray-arrow-up" variant="outlined">Issue Certificate</v-btn>
+                    <v-btn prepend-icon="mdi-magnify" variant="outlined"><router-link to="/verify">Verify Certificate</router-link></v-btn>
+                    <v-btn prepend-icon="mdi-tray-arrow-up" variant="outlined"><router-link to="/issue">Issue Certificate</router-link></v-btn>
                 </div>
 
             </div>

@@ -6,6 +6,17 @@ import tailwindcss from "@tailwindcss/vite"
 export default defineConfig({
   plugins: [
     vue(),
-    tailwindcss()
+    tailwindcss(
+      {
+        theme: {
+        extend: {
+          stroke: {
+            customBlue: 'hsl(226, 52%, 31%)',
+          },
+        },
+      },
+    }
+    )
+    
   ],
 })

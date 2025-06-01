@@ -17,13 +17,14 @@
   
         <!-- Navigation Links -->
         <nav class="flex items-center space-x-1 sm:space-x-4 gap-4">
-          <v-btn variant="text"  class="text-none">Home</v-btn>
-          <v-btn variant="text"  class="text-none">Verficify Certificate</v-btn>
+          <v-btn variant="text"  class="text-none"><router-link to="/">Home</router-link></v-btn>
+          <v-btn variant="text"  class="text-none"><router-link to="/verify">Verify Certificate</router-link></v-btn>
+          <v-btn v-if="store.isAdmin" variant="text"  class="text-none"><router-link to="/issue">Issue Certificate</router-link></v-btn>
           <v-btn v-if="!connected" variant="flat"  color="deep-orange accent-3" class="text-none text-white overflow-hidden" @click="connect">Connect Metamask</v-btn>
           <div v-if="connected" class="border rounded-full bg-green-100 text-green-700 text-xs !p-1 w-[10vw] truncate">
             {{ address }}
           </div>
-          <v-btn v-if="connected"  variant="text"  class="text-none border border-gray-300">Disconnect</v-btn>
+          <v-btn v-if="connected"  variant="text"  class="text-none border border-gray-300" @click="logout">Disconnect</v-btn>
           
         </nav>
       </div>
@@ -33,9 +34,13 @@
   <script setup>
 import { ref } from 'vue';
 import  {contractService}  from '../contract/service';
+import { useAuthStore } from '../contract/store';
+import { useRouter } from 'vue-router';
 
   const connected = ref(false)
   const address = ref(null)
+  const store = useAuthStore()
+  const router = useRouter()
 
 const connect = async () => {
  address.value =  await contractService.connectWallet();
@@ -46,11 +51,13 @@ const connect = async () => {
   console.log('okay');
   
 
-const is = await contractService.isAdmin()
+store.isAdmin = await contractService.isAdmin()
 
-console.log(is);
+}
 
-
+const logout = () => {
+  localStorage.clear()
+  router.push('/')
 }
 
   </script>

@@ -28,15 +28,17 @@
 
                     </div>
 
-                    <v-btn class="text-none">Verify Certificate</v-btn>
+                    <v-btn class="text-none" @click="verify">Verify Certificate</v-btn>
                 </v-card>
 
-                <v-card class="my-auto" width="400">
+                <v-card class="mx-auto" width="400">
                     <v-card-title primary->
                         Verfication Results
                     </v-card-title>
 
-                    <!-- <div class="overflow-hidden p-6">
+                    <v-skeleton-loader type="card" :loading="loading">
+
+                     <div v-if="verificationStatus === 'idle'" class="overflow-hidden p-6">
                         <div class="text-center">
                             
                             <div v-if="!file" class="flex flex-col items-center py-8">
@@ -63,8 +65,8 @@
                                 <p class="text-sm text-gray-500">Click verify to check authenticity</p>
                             </div>
                         </div>
-                    </div> -->
-                    <!-- <div class=" overflow-hidden">
+                    </div>
+                    <div v-if="verificationStatus === 'success'" class="overflow-hidden">
                         <div class="p-6">
                             <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">Verification Result</h2>
 
@@ -89,11 +91,11 @@
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Issuer Address:</span>
                                     <span
-                                        class="w-2/3 font-mono text-sm break-all">0x742d35Cc6634C0532925a3b8D496cE5e2fe6D3e6</span>
+                                        class="w-2/3 font-mono text-sm break-all">{{ data[3] }}</span>
                                 </div>
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Issued Date:</span>
-                                    <span class="w-2/3 font-medium">15/05/2024</span>
+                                    <span class="w-2/3 font-medium">{{ convertTimestamp(data[4]) }}</span>
                                 </div>
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Status:</span>
@@ -101,19 +103,24 @@
                                 </div>
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Hash:</span>
-                                    <span class="w-2/3 font-mono text-sm break-all">0x701e4af073a6d8</span>
+                                    <span class="w-2/3 font-mono text-sm break-all">{{ data[0] }}</span>
+                                </div>
+                                <div class="flex">
+                                    <span class="w-1/3 text-gray-500">IPFS CID:</span>
+                                    <span class="w-2/3 font-medium">{{ data[1] }}</span>
                                 </div>
                             </div>
 
                             
-                            <button
-                                class="w-full py-2 px-4 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors">
+                            <v-btn  
+                            @click="openFile"
+                                class="text-none">
                                 View Original Certificate
-                            </button>
+                            </v-btn>
                         </div>
-                    </div> -->
+                    </div>
 
-                    <div class=" overflow-hidden">
+                    <div v-if="verificationStatus === 'error'" class=" overflow-hidden">
                         <div class="p-6">
 
                             
@@ -151,6 +158,8 @@
                            
                         </div>
                     </div>
+
+                    </v-skeleton-loader>
                 </v-card>
 
             </div>
@@ -220,26 +229,75 @@
 
 
 
-<script setup>
+<script setup >
 import { ref } from 'vue';
 import { ethers } from 'ethers';
 import  {contractService}  from '../contract/service';
 
 const file = ref(null)
+const verificationStatus = ref('idle')  
+const loading = ref(false)
+const cid = ref(null)
+const data = ref({})
+
 const verify = async () => {
     try {
+
+        loading.value = true
         if (!file.value) return
 
         const certHash = await hashFile(file.value)
         const verified = await contractService.verifyCertificate(certHash)
+        console.log(verified);
+        
+        if (!verified){
+            loading.value = false
+            verificationStatus.value = 'error'
+            return
+        }
 
-        if (!verified){}
+        const response = await contractService.getCertificate(certHash)
+        data.value = response
+        cid.value = response[1]
+        verificationStatus.value = 'success'
+        loading.value = false
+        console.log(response);
+        
+    
+    
     } catch (err) {
 
     }
 }
 
+function convertTimestamp(timestamp) {
+    const timestampStr = typeof timestamp === 'bigint' 
+    ? timestamp.toString() 
+    : String(timestamp).endsWith('n') 
+      ? String(timestamp).slice(0, -1) 
+      : String(timestamp);
+  
+  // Convert to number and then to milliseconds
+  return new Date(Number(timestampStr) * 1000).toLocaleString();
+  
+}
 
+const openFile = () => {
+    
+  if (!cid.value) return
+  console.log('in ');
+  
+  const url = `https://gateway.pinata.cloud/ipfs/${cid.value}`
+  window.open(url, '_blank')
+}
+
+function convertBytesToString(byte) {
+  try {
+    stringOutput.value = ethers.toUtf8String(byte);
+  } catch (error) {
+    stringOutput.value = `Error: ${error.message}`;
+  }
+}
 
 async function hashFile(file) {
     // 1. Read file as ArrayBuffer

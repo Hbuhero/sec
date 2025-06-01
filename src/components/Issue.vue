@@ -10,7 +10,7 @@
                 <v-card  width="400">
                     <v-card-title>
                         <v-icon size="small">mdi-magnify</v-icon>
-                        Verify Certifcate
+                        Issue Certifcate
                     </v-card-title>
 
                     <div>
@@ -33,7 +33,7 @@
 
                     <div>
                         <p>Upload Certificate (PDF)</p>
-                        <v-file-input  variant="outlined" density="compact" width="200" label="Choose file"
+                        <v-file-input accept="pdf" variant="outlined" density="compact" width="200" label="Choose file"
                             v-model="file">
                         </v-file-input>
 
@@ -42,12 +42,16 @@
                     <v-btn class="text-none" @click="issueCertificate">Issue Certificate</v-btn>
                 </v-card>
 
-                <v-card  width="400">
-                    <v-card-title primary->
-                        Verfication Results
-                    </v-card-title>
+               
 
-                    <div v-if="!file" class="overflow-hidden p-6">
+                
+                    <v-card  width="400">
+                    <v-card-title primary->
+                        Issuance Results
+                    </v-card-title>
+                    <v-skeleton-loader type="card" :loading="loading">
+
+                    <div v-if="issueStatus === 'idle'" class="overflow-hidden p-6">
                         <div class="text-center">
                             
                             <div v-if="!file" class="flex flex-col items-center py-8">
@@ -57,7 +61,7 @@
                                         d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                                 </svg>
 
-                                <p class="text-gray-500">Upload a certificate to verify its authenticity</p>
+                                <p class="text-gray-500">Upload a certificate to issue its authenticity</p>
                             </div>
 
                             
@@ -71,11 +75,11 @@
                                 </div>
                                 <p class="text-sm text-gray-500 mb-1">File Ready</p>
                                 <p class="font-medium text-gray-800 mb-4">{{ file.name }}</p>
-                                <p class="text-sm text-gray-500">Click verify to check authenticity</p>
+                                <p class="text-sm text-gray-500">Click issue to process issuance</p>
                             </div>
                         </div>
                     </div> 
-                     <div v-if="condition" class=" overflow-hidden">
+                     <div v-if="issueStatus === 'success'" class=" overflow-hidden">
                         <div class="p-6">
                             <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">Verification Result</h2>
 
@@ -100,11 +104,11 @@
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Issuer Address:</span>
                                     <span
-                                        class="w-2/3 font-mono text-sm break-all">0x742d35Cc6634C0532925a3b8D496cE5e2fe6D3e6</span>
+                                        class="w-2/3 font-mono text-sm break-all">{{ data[3] }}</span>
                                 </div>
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Issued Date:</span>
-                                    <span class="w-2/3 font-medium">15/05/2024</span>
+                                    <span class="w-2/3 font-medium">{{ convertTimestamp(data[4]) }}</span>
                                 </div>
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Status:</span>
@@ -112,7 +116,7 @@
                                 </div>
                                 <div class="flex">
                                     <span class="w-1/3 text-gray-500">Hash:</span>
-                                    <span class="w-2/3 font-mono text-sm break-all">0x701e4af073a6d8</span>
+                                    <span class="w-2/3 font-mono text-sm break-all">{{ data[0] }}</span>
                                 </div>
                             </div>
 
@@ -124,7 +128,7 @@
                         </div>
                     </div>
 
-                    <div v-if="error" class="overflow-hidden">
+                    <div v-if="issueStatus === 'error'" class="overflow-hidden">
                         <div class="p-6">
                             <div class="flex flex-col items-center mb-6">
                                 <div class="p-3 bg-red-100 rounded-full mb-3">
@@ -160,11 +164,13 @@
                            
                         </div>
                     </div>
+                </v-skeleton-loader>
                 </v-card>
+                
 
-                <div v-if="loading" class="h-full w-full flex items-center justify-center bg-white mx-auto">
-            <Loader :color="'stroke-customBlue'"/>    
-        </div>
+                
+                    
+        
 
             </div>
 
@@ -179,13 +185,15 @@
 import { ethers } from 'ethers';
 import  {contractService}  from '../contract/service';
 import axios from 'axios';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { contractAddress, contractAbi, CertType } from '../contract/constants';
 import Loader from './Loader.vue';
 import {useAuthStore} from '../contract/store'
+import { useRouter } from 'vue-router';
+
 
 const store = useAuthStore()
-
+const router = useRouter()
 
 const items = [
     'Degree', 'Diploma', 'Transcript', 'Others'
@@ -193,9 +201,10 @@ const items = [
 const type = ref(null)
 const name = ref(null)
 const file = ref(null)
+const issueStatus = ref('idle')
 const jwt = import.meta.env.VITE_PINATA_JWT
-const gateway = import.meta.env.VITE_PINATA_GATEWAY
-
+const data = ref({})
+const loading = ref(false)
 
 // const pinata = new PinataSDK({
 //   pinataJwt: jwt,
@@ -206,25 +215,29 @@ const issueCertificate = async () => {
     try {
         if (!file.value) return
         console.log(file.value.name);
+
+        loading.value = true
         
-    // const ipfsFormData = new FormData()
-    // ipfsFormData.append("file", file);
-    // ipfsFormData.append('name', file.value.name)
-    // ipfsFormData.append("network", "public");
+    const ipfsFormData = new FormData()
+    ipfsFormData.append("file", file.value);
+    ipfsFormData.append('name', file.value.name)
+    ipfsFormData.append("network", "public");
     
-    // const request = await fetch("https://uploads.pinata.cloud/v3/files", {
-    //   method: "POST",
-    //   headers: {
-    //     Authorization: `Bearer ${jwt}`,
-    //   },
-    //   body: ipfsFormData,
-    // });
-    // const response = await request.json();
-    // console.log(response);
+    const request = await fetch("https://uploads.pinata.cloud/v3/files", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: ipfsFormData,
+    });
+    const ipfsresponse = await request.json();
+    
 
    const certHash = await hashFile(file.value)
    const certType = CertType[(type.value).toUpperCase()]
-   const ipfsCID = "null"
+   console.log(ipfsresponse.data.cid);
+   
+   const ipfsCID = ipfsresponse.data.cid
 
    const contract = await contractService.getContract();
       const res = await contract.issueCertificate(certHash, ipfsCID, certType)
@@ -232,36 +245,30 @@ const issueCertificate = async () => {
       res.wait()
       store.isOngoingTransaction = false
 
-    const response = await contractService.getCertificate("certHash")
-   console.log(response);
-   
+    const response = await contractService.getCertificate(certHash)
+
+    data.value = response
+    loading.value = false
+    issueStatus.value = 'success'
+
+    
 	} catch (error) {
 		console.log(error);
+        loading.value = false
+        issueStatus.value = 'error'
 	}
 }
 
-async function upload() {
-  try {
-    const formData = new FormData();
-
-    const file = new File(["hello"], "Testing.txt", { type: "text/plain" });
-
-    formData.append("file", file);
-
-    formData.append("network", "public");
-
-    const request = await fetch("https://uploads.pinata.cloud/v3/files", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-      body: formData,
-    });
-    const response = await request.json();
-    console.log(response);
-  } catch (error) {
-    console.log(error);
-  }
+function convertTimestamp(timestamp) {
+    const timestampStr = typeof timestamp === 'bigint' 
+    ? timestamp.toString() 
+    : String(timestamp).endsWith('n') 
+      ? String(timestamp).slice(0, -1) 
+      : String(timestamp);
+  
+  // Convert to number and then to milliseconds
+  return new Date(Number(timestampStr) * 1000).toLocaleString();
+  
 }
 
 async function hashFile(file) {
@@ -278,6 +285,11 @@ async function hashFile(file) {
   return ethers.keccak256('0x' + hexString);
 
 }
+
+onMounted(() => {
+    console.log(loading.value);
+    
+})
 </script>
 
 <style lang="scss" scoped></style>
